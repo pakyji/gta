@@ -37,51 +37,69 @@ export function toGuideItem(g: Guide): GuideItem {
   };
 }
 
-let seeded = false;
-export async function ensureGuidesSeeded(): Promise<void> {
-  if (seeded) return;
-  const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(guides);
+let seedRun: Promise<void> | null = null;
 
-  // Insert any missing slugs (non-destructive upsert by slug)
-  for (const s of GUIDE_SEEDS) {
-    await db
-      .insert(guides)
-      .values({
-        slug: s.slug,
-        category: s.category,
-        title: s.title,
-        summary: s.summary,
-        body: s.body,
-        imageUrl: s.imageUrl ?? null,
-        status: s.status,
-        difficulty: s.difficulty ?? null,
-        payout: s.payout ?? null,
-        platforms: s.platforms,
-        sourceName: s.sourceName ?? null,
-        sourceUrl: s.sourceUrl ?? null,
-        featured: s.featured ?? false,
-        readMinutes: s.readMinutes,
-        updatedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: guides.slug,
-        set: {
-          title: s.title,
-          summary: s.summary,
-          body: s.body,
-          category: s.category,
-          status: s.status,
-          difficulty: s.difficulty ?? null,
-          payout: s.payout ?? null,
-          platforms: s.platforms,
-          sourceName: s.sourceName ?? null,
-          sourceUrl: s.sourceUrl ?? null,
-          featured: s.featured ?? false,
-          readMinutes: s.readMinutes,
-          imageUrl: s.imageUrl ?? null,
-          updatedAt: new Date(),
-        },
-      });
+/**
+ * Seeds the guides table once per server instance. Concurrent callers share the
+ * same run, and a failed run is retried on the next request.
+ * Rows are upserted in parallel batches, not one database round trip per row.
+ */
+export function ensureGuidesSeeded(): Promise<void> {
+  if (!seedRun) {
+    seedRun = seedGuides().catch((err) => {
+      seedRun = null;
+      throw err;
+    });
+  }
+  return seedRun;
+}
+
+async function seedGuides(): Promise<void> {
+  const BATCH = 20;
+  for (let i = 0; i < GUIDE_SEEDS.length; i += BATCH) {
+    const batch = GUIDE_SEEDS.slice(i, i + BATCH);
+    await Promise.all(
+      batch.map((s) =>
+        db
+          .insert(guides)
+          .values({
+            slug: s.slug,
+            category: s.category,
+            title: s.title,
+            summary: s.summary,
+            body: s.body,
+            imageUrl: s.imageUrl ?? null,
+            status: s.status,
+            difficulty: s.difficulty ?? null,
+            payout: s.payout ?? null,
+            platforms: s.platforms,
+            sourceName: s.sourceName ?? null,
+            sourceUrl: s.sourceUrl ?? null,
+            featured: s.featured ?? false,
+            readMinutes: s.readMinutes,
+            updatedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: guides.slug,
+            set: {
+              title: s.title,
+              summary: s.summary,
+              body: s.body,
+              category: s.category,
+              status: s.status,
+              difficulty: s.difficulty ?? null,
+              payout: s.payout ?? null,
+              platforms: s.platforms,
+              sourceName: s.sourceName ?? null,
+              sourceUrl: s.sourceUrl ?? null,
+              featured: s.featured ?? false,
+              readMinutes: s.readMinutes,
+              imageUrl: s.imageUrl ?? null,
+              updatedAt: new Date(),
+            },
+          }),
+      ),
+    );
   }
 
   // Remove glitch rows from older imports that are no longer in the index.
@@ -95,11 +113,6 @@ export async function ensureGuidesSeeded(): Promise<void> {
         notInArray(guides.slug, keepSlugs),
       ),
     );
-
-  if (count === 0) {
-    /* first boot path already handled by loop */
-  }
-  seeded = true;
 }
 
 export async function listGuides(opts: { category?: GuideCategory; q?: string; limit?: number } = {}): Promise<GuideItem[]> {

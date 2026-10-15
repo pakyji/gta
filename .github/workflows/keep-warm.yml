@@ -1,7 +1,7 @@
 # Keeps the server and the database awake so the first visitor does not wait
 # for a cold start. Runs every 5 minutes on GitHub's free scheduler.
 #
-# It calls /api/feed/posts because that route is not cached on the CDN,
+# It calls /home (server render + database) and /api/feed/posts, because that route is not cached on the CDN,
 # so every ping really reaches the server and the database.
 name: Keep site warm
 
@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Ping the site
         run: |
-          for path in /api/feed/posts /api/health; do
+          for path in /home /api/feed/posts /api/health; do
             curl -s -o /dev/null --max-time 60 \
               -w "%{http_code} %{time_total}s ${path}\n" \
               "https://gtaco.netlify.app${path}" || true

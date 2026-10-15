@@ -38,28 +38,29 @@ export function toNewsItem(n: NewsPost): NewsItem {
   };
 }
 
-let seeded = false;
-export async function ensureNewsSeeded(): Promise<void> {
-  if (seeded) return;
-  for (const s of NEWS_SEEDS) {
-    await db
-      .insert(newsPosts)
-      .values({
-        slug: s.slug,
-        kind: s.kind,
-        title: s.title,
-        summary: s.summary,
-        body: s.body,
-        imageUrl: s.imageUrl ?? null,
-        sourceName: s.sourceName,
-        sourceUrl: s.sourceUrl,
-        publishedAt: new Date(s.publishedAt),
-        expiresAt: s.expiresAt ? new Date(s.expiresAt) : null,
-        tags: s.tags,
-      })
-      .onConflictDoUpdate({
-        target: newsPosts.slug,
-        set: {
+let seedRun: Promise<void> | null = null;
+
+/**
+ * Seeds news once per server instance. Concurrent callers share the same run,
+ * and a failed run is retried on the next request.
+ */
+export function ensureNewsSeeded(): Promise<void> {
+  if (!seedRun) {
+    seedRun = seedNews().catch((err) => {
+      seedRun = null;
+      throw err;
+    });
+  }
+  return seedRun;
+}
+
+async function seedNews(): Promise<void> {
+  await Promise.all(
+    NEWS_SEEDS.map((s) =>
+      db
+        .insert(newsPosts)
+        .values({
+          slug: s.slug,
           kind: s.kind,
           title: s.title,
           summary: s.summary,
@@ -68,13 +69,27 @@ export async function ensureNewsSeeded(): Promise<void> {
           sourceName: s.sourceName,
           sourceUrl: s.sourceUrl,
           publishedAt: new Date(s.publishedAt),
+          expiresAt: s.expiresAt ? new Date(s.expiresAt) : null,
           tags: s.tags,
-        },
-      });
-  }
+        })
+        .onConflictDoUpdate({
+          target: newsPosts.slug,
+          set: {
+            kind: s.kind,
+            title: s.title,
+            summary: s.summary,
+            body: s.body,
+            imageUrl: s.imageUrl ?? null,
+            sourceName: s.sourceName,
+            sourceUrl: s.sourceUrl,
+            publishedAt: new Date(s.publishedAt),
+            tags: s.tags,
+          },
+        }),
+    ),
+  );
   // scrub old broken seed rows that used glitch art
   await db.execute(sql`update news_posts set image_url = '/images/news-weekly.jpg' where image_url is null or image_url like '%glitch%' or image_url like '%cat-glitch%'`);
-  seeded = true;
 }
 
 export async function listNews(opts: { kind?: NewsKind; q?: string; limit?: number } = {}): Promise<NewsItem[]> {
