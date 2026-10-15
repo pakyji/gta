@@ -26,6 +26,6 @@
 
 > Community app for GTA Online players on PS4 and PS5: live platform chat, news, guides, a glitch index, and AI helpers. Ships as a PWA and an Android APK. Not affiliated with Rockstar Games.
 
-**Website:** your deployed site URL (for example `https://your-domain.example`)
+**Website:** https://gtaco.netlify.app
 
 **Topics:** `gta-online` `gta` `ps4` `ps5` `nextjs` `react` `typescript` `postgresql` `drizzle-orm` `pwa` `android` `webview` `community` `chat`

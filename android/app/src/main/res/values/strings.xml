@@ -1,4 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">GTA Online Community</string>
+
+    <string name="menu_reload">Reload</string>
+    <string name="menu_check_updates">Check for updates</string>
+    <string name="menu_share">Share app</string>
+    <string name="menu_open_browser">Open in browser</string>
+    <string name="share_text">Join me on GTA Online Community: %1$s</string>
+
+    <string name="update_checking">Checking for updates...</string>
+    <string name="update_up_to_date">You have the latest version.</string>
+    <string name="update_failed">Could not check for updates. Try again later.</string>
+    <string name="update_available_title">Update available</string>
+    <string name="update_available_message">Version %1$s is out (you have %2$s). Download the new APK now? After it downloads, open the file to install. Android may ask you to allow installs from your browser.</string>
+    <string name="update_download">Download</string>
+    <string name="update_later">Later</string>
 </resources>
