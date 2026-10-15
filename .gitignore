@@ -1,0 +1,31 @@
+# Dependencies and build output
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment and secrets: never commit these
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+android/keystore.properties
+
+# Android build output and binaries (APKs go to GitHub Releases, not the repo)
+android/.gradle/
+android/.idea/
+android/local.properties
+android/app/build/
+android/build/
+*.apk
+*.aab
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

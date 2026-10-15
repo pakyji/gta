@@ -1,0 +1,81 @@
+plugins {
+    id 'com.android.application'
+}
+
+// The site the APK opens. Priority: -PappUrl, then APP_URL env var, then gradle.properties.
+def appUrl = (project.hasProperty('appUrl') ? project.property('appUrl') : null)
+        ?: System.getenv('APP_URL')
+        ?: 'https://your-domain.example'
+if (!appUrl.startsWith('https://')) {
+    throw new GradleException("appUrl must start with https:// (got: ${appUrl})")
+}
+
+// Release signing. Read from keystore.properties (never committed) or from environment variables.
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file('keystore.properties')
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+}
+def envStore = System.getenv('GTAC_KEYSTORE_FILE')
+def hasSigning = (envStore != null && envStore != '') || keystorePropsFile.exists()
+
+android {
+    namespace 'com.gtaonlinecommunity.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.gtaonlinecommunity.app'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0.0'
+        buildConfigField 'String', 'APP_URL', "\"${appUrl}\""
+    }
+
+    signingConfigs {
+        release {
+            if (hasSigning) {
+                if (envStore != null && envStore != '') {
+                    storeFile file(envStore)
+                    storePassword System.getenv('GTAC_KEYSTORE_PASSWORD')
+                    keyAlias System.getenv('GTAC_KEY_ALIAS')
+                    keyPassword System.getenv('GTAC_KEY_PASSWORD')
+                } else {
+                    storeFile rootProject.file(keystoreProps.getProperty('storeFile'))
+                    storePassword keystoreProps.getProperty('storePassword')
+                    keyAlias keystoreProps.getProperty('keyAlias')
+                    keyPassword keystoreProps.getProperty('keyPassword')
+                }
+            }
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    // Release lint is memory-heavy and not needed to build a signed APK.
+    // Run `./gradlew lint` manually when you want the report.
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (hasSigning) {
+                signingConfig signingConfigs.release
+            }
+        }
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Offline</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #0b0b12;
+      color: #e8e8f0;
+      font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    h1 { font-size: 20px; margin: 0 0 8px; }
+    p { color: #9a9ab0; font-size: 14px; line-height: 1.5; margin: 0 0 20px; }
+    a.retry {
+      display: inline-block;
+      padding: 12px 22px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>Can't reach the community</h1>
+    <p>Check your internet connection, then try again.<br>The server may also be offline for maintenance.</p>
+    <a class="retry" href="gtacommunity://retry">Try again</a>
+  </div>
+</body>
+</html>
