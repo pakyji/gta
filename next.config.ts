@@ -27,6 +27,17 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         headers: [{ key: "Cache-Control", value: "no-store" }],
       },
+      // Public, same-for-everyone data: cache on the CDN for 5 minutes.
+      // Later rules override the "no-store" rule above for these exact paths.
+      // Chat, feed, session, AI and login are user-specific and stay no-store.
+      ...["/api/guides", "/api/news", "/api/vehicles", "/api/music/stations", "/api/fun/weather"].map(
+        (source) => ({
+          source,
+          headers: [
+            { key: "Cache-Control", value: "public, s-maxage=300, stale-while-revalidate=900" },
+          ],
+        }),
+      ),
       {
         source: "/:path*",
         headers: [
