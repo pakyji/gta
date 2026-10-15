@@ -24,7 +24,8 @@ const BOTS = [
 
 export function BotDock() {
   const pathname = usePathname();
-  if (pathname?.startsWith("/ai/")) return null;
+  // Hidden on chat screens so the message box is not covered, and on AI screens.
+  if (pathname?.startsWith("/ai/") || pathname?.startsWith("/chat/")) return null;
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50" style={{ paddingBottom: "max(0.3rem, var(--sab))" }}>
